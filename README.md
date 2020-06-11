@@ -1,4 +1,6 @@
-# gmaps
+# VueJS Google Maps directions API example
+
+Do not forget to app your Google Maps API key to ./src/credentials.js file (example file ./src/credentials.js.example)
 
 ## Project setup
 ```
