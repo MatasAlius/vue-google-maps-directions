@@ -1,86 +1,71 @@
 <template>
   <div class="home">
-    {{ distance }}, {{ duration }}
+    
+    <component :is="currentComponent" v-on:startCoordinates="sCoordinates($event)" v-bind:startCoordinates="startCoordinates"></component>
+    
+    <div>
+        <b-button variant="success" v-if="counter!=1" v-on:click="changeComponent(1);">&lt;- Back</b-button>
+        <b-button variant="success" v-if="counter!=2" v-on:click="changeComponent(2);">Next -&gt;</b-button>
+    </div>
+
+    <p>{{ counter }}/2</p>
     <br>
-    <GmapMap
-      ref="mapRef"
-      :center="{lat:54.7492, lng:24.6161}"
-      :zoom="8"
-      class="google-map"
-    ></GmapMap>    
   </div>
 </template>
 
 <script>
-import {gmapApi} from 'vue2-google-maps';
+
+import PositionHome from '@/components/PositionHome.vue';
+import MapsHome from '@/components/MapsHome.vue';
 
 export default {
   name: 'Home', 
+  components: {
+    'position': PositionHome,
+    'maps': MapsHome
+  },
   data() {
     return {
-      citiesList: ['55.148824, 24.5653061', '55.850033, 24.6500523','Kaunas'],
-      newCity: '',
-      directionsService: null,
-      directionsDisplay: null,
-      distance: 0,
-      duration: 0
-    };
+      currentComponent: 'position',
+      component: '',
+      counter: 1,
+      startCoordinates: []
+    }
   },
-  computed: {
-    google: gmapApi
-  },
-  
   methods: {
-    calculateAndDisplayRoute() {
-      // using coordinates
-      var sta = { lat: 55.148824,
-                lng: 24.5653061 };
-      var des = { lat: 55.850033,
-                lng: 24.6500523 };
-
-      this.directionsService.route({
-        origin: sta,
-        destination: des, 
-        travelMode: 'DRIVING', // WALKING; BICYCLING
-      }, (response, status) => {
-        if (status === 'OK') {
-          this.directionsDisplay.setDirections(response);
-          this.distance = this.directionsDisplay.directions.routes[0].legs[0].distance.text;
-          this.duration = this.directionsDisplay.directions.routes[0].legs[0].duration.text;
-          console.log("Distance: "+this.distance);
-          console.log("Duration: "+this.duration);
-
-        }
-      });
+    changeComponent(number) {
+      if (number == 1) {
+          this.currentComponent = 'position';
+          this.counter = 1;
+      }
+      else {
+          if (this.startCoordinates != 0) {
+            this.counter = 2;
+            this.currentComponent = 'maps';
+          }
+          else {
+            // makes popout when user didn't choose start point
+            this.$bvToast.toast('To choose trip start point press on red marker and drag to the needed start point.', {
+              title: 'Please choose trip start point.',
+              toaster: 'b-toaster-top-center',
+              variant: 'danger',
+              solid: true
+            });
+          }
+      }
     },
-    updateCities() {
+    sCoordinates: function(coordinates) {
+      this.startCoordinates = coordinates;
     }
   },
   mounted() {
-    
-    this.$refs.mapRef.$mapPromise.then((map) => {
-      this.directionsService = new this.google.maps.DirectionsService();
-      this.directionsDisplay = new this.google.maps.DirectionsRenderer({ draggable: false, map });
-      const that = this;
-      this.directionsDisplay.addListener('directions_changed', () => {
-        that.updateCities();
-      });
-      this.calculateAndDisplayRoute(this.directionsDisplay,this.directionsService);
-    });
-    
+    this.counter = 1;
   }
 }
 </script>
 <style scoped>
-.map-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-}
-.google-map {
-  width: 100%;
-  height: 480px;
-  margin: 0 20px;
-  background: gray;
+.buttons {
+    margin-bottom: 20px;
+    border: 2px solid darkslategray;
 }
 </style>
