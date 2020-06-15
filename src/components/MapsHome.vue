@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <h5>Trip distance: {{ distance }}, duration: {{ duration }}.</h5>
+    <h5>Trip distance: {{ distance }} km, duration: {{ duration }}.</h5>
     <GmapMap
       ref="mapRef"
       :center="{lat:54.7492, lng:24.6161}"
@@ -45,21 +45,52 @@ export default {
 
         var des = 'Vilnius';     // or you can write city name
 
-        //TODO: add waypoints example
+        // waypoints example
+        var waypts = [];
+        waypts.push({location: { lat: 55.497692,
+                  lng: 25.6020783 }, stopover: true});
+        waypts.push({location: { lat: 55.230595,
+                  lng: 25.416945 }, stopover: true});
 
         this.directionsService.route({
             origin: sta,
             destination: des, 
-            //waypoints: waypts,    // waypoints
+            waypoints: waypts,    // waypoints
             optimizeWaypoints: true,
             travelMode: 'DRIVING', // WALKING; BICYCLING
         }, (response, status) => {
             if (status === 'OK') {
                 this.directionsDisplay.setDirections(response);
 
-                // distance and duration is accurate if where are no added waypoints, because legs[0]. To get distance and duration with added waypoints you should do cycle from legs[0] to legs[n] and add all values.
+                // distance and duration is accurate if where are no added waypoints, because legs[0] not from 0 to n. 
+                
                 this.distance = this.directionsDisplay.directions.routes[0].legs[0].distance.text;
                 this.duration = this.directionsDisplay.directions.routes[0].legs[0].duration.text;
+
+                // to get distance and duration with added waypoints you should do cycle from legs[0] to legs[n] and add all values. Keep in mind that distance will be in meters and duration in seconds
+                var realDistance = 0;
+                var realDuration = 0;
+                var legs = this.directionsDisplay.directions.routes[0].legs;
+                
+                for (var i=0; i<legs.length; ++i) {
+                  realDistance += legs[i].distance.value;
+                  realDuration += legs[i].duration.value;
+                }
+
+                this.distance = realDistance/1000; // realDistance is in meters
+
+                // Calculates trip duration from seconds
+                var h = Math.floor(realDuration / 3600);
+                var min = Math.floor((realDuration - (h * 3600)) / 60);
+                var sec = realDuration - (h * 3600) - (min * 60);
+
+                if (sec > 30) {
+                  min = min+1;
+                  sec = 0;
+                }
+
+                this.duration = h+":"+min+":00";
+
                 console.log("Distance: "+this.distance);
                 console.log("Duration: "+this.duration);
             }
